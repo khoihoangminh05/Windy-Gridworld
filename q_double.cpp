@@ -24,7 +24,8 @@ class agent
 {
 public:
    int step=0;
-   double ValueEstimate[7][10][4]={0};
+   double Q1[7][10][4]={0};
+   double Q2[7][10][4]={0};
 
    double alpha;
    double epsilon;
@@ -36,15 +37,18 @@ public:
       if(E<=epsilon)  a = Rand(0,3);
       else
       {
-          for(int i=0;i<4;i++) if(ValueEstimate[u][v][i]>ValueEstimate[u][v][a]) a = i;
+          for(int i=0;i<4;i++)
+          {
+              if(Q1[u][v][i] + Q2[u][v][i] > Q1[u][v][a] + Q2[u][v][a]) a = i;
+          }
       }
      return a;
    }
 
 };
-void update(int u,int v,int a,int *U,int *V)
+void update(int a,int *U,int *V)
 {
-   int Z=*V;
+   int Z = *V;
    if(a==0) (*U)--;
    if(a==1) (*V)++;
    if(a==2) (*U)++;
@@ -56,7 +60,7 @@ void update(int u,int v,int a,int *U,int *V)
 int main()
 {
     ll episode = 170;
-    agent A(0.8,0.1);
+    agent A(0.7,0.1);ll cnt=0;
     for(ll I=1;I<=episode;I++)
     {
         ll u = 3;
@@ -66,13 +70,21 @@ int main()
           int a = A.action(u,v);
           int R = -1;
           int U=u,V=v;
-          update(u,v,a,&U,&V);
+          update(a,&U,&V);
           if(U==3&&V==7) R=0;
-          double MAX = -1e13;
-          for(int i=0;i<4;i++) MAX = max(MAX,A.ValueEstimate[U][V][i]);
-          A.ValueEstimate[u][v][a] += A.alpha*(R + MAX - A.ValueEstimate[u][v][a]);
+          int A_MAXQ1 = 0;
+          int A_MAXQ2 = 0;
+          for(int i=0;i<4;i++) if(A.Q1[U][V][A_MAXQ1]<A.Q1[U][V][i]) A_MAXQ1 = i;
+          for(int i=0;i<4;i++) if(A.Q2[U][V][A_MAXQ2]<A.Q2[U][V][i]) A_MAXQ2 = i;
+
+          int P = Rand(0,1);
+          if(P)
+            A.Q1[u][v][a] += A.alpha*(R + A.Q2[U][V][A_MAXQ1] - A.Q1[u][v][a]);
+          else
+            A.Q2[u][v][a] += A.alpha*(R + A.Q1[U][V][A_MAXQ2] - A.Q2[u][v][a]);
+
           A.step++;
-          A.epsilon = 1.0 / (log(A.step)+100000);
+            A.epsilon = 1.0 / (log(A.step)+10000);
           u=U;
           v=V;
         } while(u!=3||v!=7);

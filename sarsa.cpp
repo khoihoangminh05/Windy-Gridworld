@@ -61,20 +61,22 @@ int main()
     {
         ll u = 3;
         ll v = 0;
+        ll _a = A.action(u,v);
         do
         {
-          int a = A.action(u,v);
+
           int R = -1;
           int U=u,V=v;
-          update(u,v,a,&U,&V);
+          update(u,v,_a,&U,&V);
           if(U==3&&V==7) R=0;
-          double MAX = -1e13;
-          for(int i=0;i<4;i++) MAX = max(MAX,A.ValueEstimate[U][V][i]);
-          A.ValueEstimate[u][v][a] += A.alpha*(R + MAX - A.ValueEstimate[u][v][a]);
+          int a = A.action(U,V);
+          A.ValueEstimate[u][v][_a] += A.alpha*(R + A.ValueEstimate[U][V][a] - A.ValueEstimate[u][v][_a]);
           A.step++;
+
           A.epsilon = 1.0 / (log(A.step)+100000);
           u=U;
           v=V;
+          _a=a;
         } while(u!=3||v!=7);
         cout<<A.step<<" ";
         A.step=0;
